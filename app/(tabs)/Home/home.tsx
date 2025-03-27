@@ -27,7 +27,7 @@ export default function HomeScreen() {
         <View style={styles.actionsContainer}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => router.push('/(tabs)/Chat/chat')}
+            onPress={() => router.push('/(tabs)/Chat')}
           >
             <Feather name="message-circle" size={30} color="#ff6b6b" />
             <Text style={styles.actionText}>Chat Now</Text>

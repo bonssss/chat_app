@@ -7,70 +7,103 @@ import { supabase } from '../../../lib/supabase';
 type Message = {
   id: string;
   text: string;
-  sender_id: string; // User ID from Supabase auth
-  created_at: string; // ISO timestamp from Supabase
+  sender_id: string;
+  recipient_id: string;
+  created_at: string;
 };
 
 export default function ChatScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [recipientId, setRecipientId] = useState<string | null>(null);
 
-  // Fetch current user and initial messages
   useEffect(() => {
-    const fetchUserAndMessages = async () => {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        Alert.alert('Error', 'User not authenticated');
+    const fetchUser = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        Alert.alert('Error', 'Please log in to use chat');
         return;
       }
       setUserId(user.id);
 
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50); // Limit to last 50 messages
+      const userAId = 'd4f52b48-14c6-4717-b26a-11030e051403'; // User A
+      const userBId = '66226eb9-b619-4c55-b62f-63837eca2c44'; // User B
+      const newRecipientId = user.id === userAId ? userBId : userAId;
+      console.log('User ID:', user.id, 'Recipient ID set to:', newRecipientId);
+      setRecipientId(newRecipientId);
+    };
 
-      if (error) {
-        console.error('Error fetching messages:', error);
-        Alert.alert('Error', 'Failed to load messages');
-      } else {
+    const fetchMessages = async () => {
+      if (!userId || !recipientId) {
+        console.log('Skipping fetch: userId or recipientId not set');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .or(`and(sender_id.eq.${userId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${userId})`)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        console.log('Fetched messages:', data);
         setMessages(data || []);
+      } catch (error: any) {
+        console.error('Error fetching messages:', error.message);
+        Alert.alert('Error', 'Failed to load messages: ' + error.message);
       }
     };
 
-    fetchUserAndMessages();
+    fetchUser();
+    if (userId && recipientId) fetchMessages();
 
-    // Real-time subscription
     const subscription = supabase
       .channel('public:messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
-        setMessages((current) => [payload.new as Message, ...current]);
+        const newMessage = payload.new as Message;
+        console.log('New message received:', newMessage);
+        if (
+          (newMessage.sender_id === userId && newMessage.recipient_id === recipientId) ||
+          (newMessage.sender_id === recipientId && newMessage.recipient_id === userId)
+        ) {
+          setMessages((current) => [newMessage, ...current]);
+        }
       })
       .subscribe();
 
-    // Cleanup subscription on unmount
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, []);
+  }, [userId, recipientId]);
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !userId) return;
+    if (!newMessage.trim() || !userId || !recipientId) {
+      Alert.alert('Error', 'Cannot send message: User or recipient not set');
+      return;
+    }
 
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        text: newMessage.trim(),
-        sender_id: userId,
-      });
+    const messageToSend = {
+      text: newMessage.trim(),
+      sender_id: userId,
+      recipient_id: recipientId,
+    };
+    console.log('Sending message:', messageToSend);
 
-    if (error) {
-      console.error('Error sending message:', error);
-      Alert.alert('Error', 'Failed to send message');
-    } else {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert(messageToSend);
+
+      if (error) throw error;
+
       setNewMessage('');
+    } catch (error: any) {
+      console.error('Error sending message:', error.message);
+      Alert.alert('Error', 'Failed to send message: ' + error.message);
     }
   };
 
@@ -90,21 +123,16 @@ export default function ChatScreen() {
         style={styles.container}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
-        {/* Chat Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Our Chat 💬</Text>
+          <Text style={styles.title}>Chat with {recipientId || 'Loading...'} 💬</Text>
         </View>
-
-        {/* Message List */}
         <FlatList
           data={messages}
           renderItem={renderMessage}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.messageList}
-          inverted // New messages at bottom
+          inverted
         />
-
-        {/* Input Area */}
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}

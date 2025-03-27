@@ -1,19 +1,19 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 
-type RegisterScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Register'>;
+// Define navigation prop types if needed, though Expo Router uses useRouter instead
+export type RootStackParamList = {
+  Register: undefined;
+  Login: undefined;
+};
 
-interface RegisterScreenProps {
-  navigation: RegisterScreenNavigationProp;
-}
-
-export default function RegisterScreen({ navigation }: RegisterScreenProps) {
+export default function RegisterScreen() {
+  const router = useRouter(); // Use Expo Router's hook instead of navigation prop
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
@@ -26,7 +26,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     confirmPassword: '',
   });
 
-  // Validation functions
+  // Validation functions (unchanged)
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email.trim());
@@ -45,7 +45,6 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
     let newErrors = { email: '', password: '', confirmPassword: '' };
     let isValid = true;
 
-    // Email validation
     if (!email.trim()) {
       newErrors.email = 'Email is required';
       isValid = false;
@@ -54,7 +53,6 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
       isValid = false;
     }
 
-    // Password validation
     if (!password) {
       newErrors.password = 'Password is required';
       isValid = false;
@@ -69,7 +67,6 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
       }
     }
 
-    // Confirm password validation
     if (!confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
       isValid = false;
@@ -103,7 +100,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           [
             {
               text: 'OK',
-              onPress: () => navigation.navigate('Login'),
+              onPress: () => router.push('/Auth/login'), // Navigate using Expo Router
             },
           ]
         );
@@ -132,6 +129,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
         </View>
 
         <View style={styles.inputContainer}>
+          {/* Input fields remain unchanged */}
           <View style={styles.inputWrapper}>
             <Feather name="heart" size={20} color="#ff6b6b" style={styles.icon} />
             <TextInput
@@ -150,6 +148,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           </View>
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
+          {/* Password and Confirm Password fields remain unchanged */}
           <View style={styles.inputWrapper}>
             <Feather name="lock" size={20} color="#ff6b6b" style={styles.icon} />
             <TextInput
@@ -224,7 +223,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={() => navigation.navigate('Login')}
+            onPress={() => router.push('/Auth/login')} // Navigate using Expo Router
             style={styles.loginButton}
             disabled={loading}
           >
@@ -239,6 +238,7 @@ export default function RegisterScreen({ navigation }: RegisterScreenProps) {
   );
 }
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,

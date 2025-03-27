@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "chat_app",
+    "name": "Chat Me",
     "slug": "chat_app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/preview.jpg",
+    "icon": "./assets/images/love.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -15,7 +15,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.bonssss.chat_app"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +37,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "6e21d5e8-5531-4553-aded-bc9eb714e72a"
+      }
+    },
+    "owner": "arifpay"
   }
 }
